@@ -1,0 +1,126 @@
+/*----------------------------------------------------------
+  --- DATEI: Tetris.ATG
+  --- INHAL: Ermitteln der Spielergebnisse 
+  --- AUTOR: Gruppe2
+  ----------------------------------------------------------*/
+
+COMPILER Logdatei
+
+CHARACTERS
+   buchstabe =   "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz" .
+   ziffer    =   "0123456789" .
+   sonderzeichen = "-_.".
+   
+
+TOKENS
+		
+   zahl = ziffer {ziffer}.
+   wort = buchstabe {buchstabe|ziffer|sonderzeichen}.
+   ergebnisTrenner = ";".
+   
+PRAGMAS
+
+IGNORE '\r' + '\n' + '\t'
+
+
+PRODUCTIONS
+Logdatei = Datensatz {Datensatz}(. System.out.println(Highscore.getHighscore()); .).
+
+Datensatz =     (. Spielergebnis result; String mail; int maxPoints = 0;.)
+                Account<^mail>
+                Spielergebnis<^result> (. 
+                    if (result.isDatumValid() && result.isUhrzeitValid())  { 
+                        if(result.getErreichtePunkte() > maxPoints){
+                            maxPoints = result.getErreichtePunkte();                                            
+                        }
+                        Highscore.addSpiele();
+ 						Highscore.addVerbauteTetrisSteine(result.getVerbauteTetrisSteine());
+                        Highscore.setMaxSpiel(result.getErreichtePunkte(), mail,result.getSpielDauer());
+                    } 
+                .)
+
+                {Spielergebnis<^result> (. 
+                    if (result.isDatumValid() && result.isUhrzeitValid())  { 
+                        if(result.getErreichtePunkte() > maxPoints){
+                            maxPoints = result.getErreichtePunkte();                                           
+                        }
+                        Highscore.addSpiele();
+                        Highscore.addVerbauteTetrisSteine(result.getVerbauteTetrisSteine());
+                        Highscore.setMaxSpiel(result.getErreichtePunkte(), mail,result.getSpielDauer());
+                    } 
+                .)}
+                (. System.out.println("Spieler " + mail + " hat maximal folgende Punktezahl erreicht: " + maxPoints); .)
+                .
+
+
+/*----*/        
+Spielergebnis<^Spielergebnis result> = (. result = new Spielergebnis();.)
+        Datum<^boolean datumValid> (. result.setDatumValid(datumValid); .)
+        Uhrzeit<^boolean uhrzeitValid> (. result.setUhrzeitValid(uhrzeitValid); .)
+        zahl
+        Spieldauer <^int spieldauer>  (. result.setSpielDauer(spieldauer); .)
+        ErreichtePunkte <^int erreichtePunkte>  (. result.setErreichtePunkte(erreichtePunkte); .)
+        VerbauteTetrisSteine <^int verbauteTetrisSteine> (. result.setVerbauteTetrisSteine(verbauteTetrisSteine); .)
+        zahl
+        ergebnisTrenner
+        . 
+
+
+
+VerbauteTetrisSteine <^int verbauteTetrisSteine> =
+        zahl (. verbauteTetrisSteine = Integer.parseInt(t.val); .)
+        .
+
+ErreichtePunkte <^int erreichtePunkte> =
+        zahl (. erreichtePunkte = Integer.parseInt(t.val); .)
+        .
+
+Spieldauer <^int spieldauer> =
+        zahl (. spieldauer = Integer.parseInt(t.val); .)
+        .
+        
+/* ------ */
+Account <^String mailAddress> =
+        "Account:"
+        mail<^mailAddress>
+        .
+
+/* ------ */
+mail<^String mail> =  Username (. mail = t.val + "@"; .)
+ 					  "@" 
+ 					  Mailserver (. mail += t.val; .)
+ 					  .
+ 					  
+Username = wort .
+Mailserver = wort .
+
+/* ------ */
+
+Datum<^boolean datumValid> = (. datumValid = true; int tag = -1; int monat = -1; int jahr = -1;.)
+        Tag (. tag = Integer.parseInt(t.val); .)
+        "."
+        Monat (. monat = Integer.parseInt(t.val); .)
+        "."
+        Jahr (. jahr = Integer.parseInt(t.val); .)
+        (. datumValid = Spielergebnis.isDateValid(tag + "." + monat + "." + jahr); .)
+        .
+        
+Tag = zahl.
+Monat = zahl.
+Jahr =  zahl.
+
+/* ------ */
+Uhrzeit<^boolean uhrzeitValid> = (. uhrzeitValid = true; int stunden = -1; int minuten = -1; int sekunden = -1;.)
+        Stunden (. stunden = Integer.parseInt(t.val); .)
+        ":"
+        Minuten (. minuten = Integer.parseInt(t.val); .)
+        ":"
+        Sekunden (. sekunden = Integer.parseInt(t.val); .)
+        (. uhrzeitValid = Spielergebnis.isUhrValid(stunden + ":" + minuten + ":" + sekunden); .)
+        .
+
+Stunden = zahl.
+Minuten = zahl.
+Sekunden = zahl.
+
+END Logdatei.
